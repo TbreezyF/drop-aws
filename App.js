@@ -550,7 +550,7 @@ app.get('/api/status/', verifyToken, async(req, res) => {
             });
         }
     } else {
-        res.status(403).json({ error: 'FORBIDDEN: Error checking status' });
+        res.status(404).json({ error: 'NOT FOUND: Status not available' });
     }
 });
 
