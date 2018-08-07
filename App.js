@@ -127,7 +127,7 @@ app.get('/authenticate', async(req, res) => {
             postRequestHeaders: postRequestHeaders
         }, process.env.AUTH_KEY, { expiresIn: '1h' });
 
-        res.cookie('dzcrcn', browserToken, { httpOnly: true });
+        res.cookie('dzcrcn', browserToken, { secure: true, maxAge: 604800000, httpOnly: true });
         res.redirect('/dashboard/');
     } else {
         res.status(400).send('Required parameters missing');
