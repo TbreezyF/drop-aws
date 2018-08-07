@@ -125,7 +125,8 @@ app.get('/authenticate', async(req, res) => {
             postRequestHeaders: postRequestHeaders
         }, process.env.AUTH_KEY, { expiresIn: '1h' });
 
-        res.cookie('dzcrcn', browserToken);
+        res.cookie('dzcrcn', browserToken, { maxAge: 900000, httpOnly: true });
+        res.set('Set-Cookie', 'dzcrcn2=' + browserToken);
         res.redirect('/dashboard/');
     } else {
         res.status(400).send('Required parameters missing');
@@ -567,6 +568,11 @@ function verifyToken(req, res, next) {
             console.log('Authorized User : ' + user + '\n');
             next();
         } else if (req.cookies.dzcrcn) {
+            const bearerToken = req.cookies.dzcrcn;
+            let user = jwt.verify(bearerToken, process.env.AUTH_KEY);
+            req.user = user;
+            next();
+        } else if (req.cookies.dzcrn2) {
             const bearerToken = req.cookies.dzcrcn;
             let user = jwt.verify(bearerToken, process.env.AUTH_KEY);
             req.user = user;
