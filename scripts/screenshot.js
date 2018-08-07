@@ -1,25 +1,36 @@
 module.exports = {
     image: async(shop, db) => {
         try {
-            let screenshot;
-            const puppeteer = require('puppeteer');
-            (async() => {
-                const browser = await puppeteer.launch({
-                    args: ['--no-sandbox']
-                });
-                const page = await browser.newPage();
-                await page.setViewport({
-                    width: 375,
-                    height: 667,
-                    isMobile: true
-                });
-                await page.goto('https://' + shop);
-                screenshot = (await page.screenshot()).toString('base64');
-                await browser.close();
-                if (screenshot) {
-                    updateDBwithScreenshot(shop, screenshot, db);
-                }
-            })();
+            const AWS = require('aws-sdk');
+
+            AWS.config.update({
+                region: "ca-central-1",
+                endpoint: "https://lambda.ca-central-1.amazonaws.com"
+            });
+
+            let lambda = new AWS.Lambda();
+
+            let payload = JSON.stringify({
+                "shop": shop
+            });
+
+            let params = {
+                FunctionName: 'dropthemizer-screenshotter',
+                InvocationType: 'RequestResponse',
+                Payload: payload
+            };
+
+            console.log('Fetching screenshot from lambda for ' + shop + '...');
+
+            let data = await lambda.invoke(params).promise();
+
+            console.log('Fetch succeeded exit (0)\n');
+
+            let screenshot = JSON.parse(data.Payload);
+
+            if (!data.FunctionError || data.FunctionError == '') {
+                updateDBwithScreenshot(shop, screenshot, db);
+            }
             return screenshot;
         } catch (error) {
             console.log('Could not generate new screenshot exit(1)');
