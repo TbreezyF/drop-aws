@@ -1,5 +1,5 @@
 const dotenv = require('dotenv').config();
-const ejs = require('ejs');
+const hbs = require('express-handlebars');
 const express = require('express');
 const app = express();
 const crypto = require('crypto');
@@ -20,7 +20,6 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
-let pollData = {};
 
 let postRequestHeaders, getRequestHeaders;
 
@@ -30,7 +29,8 @@ const scopes = ['read_themes', 'write_themes', 'read_products', 'write_products'
 const APP_URL = "https://dropthemizer.sproft.com"; // Replace this with your HTTPS Forwarding address
 
 //Set up app view engine/static paths
-app.set('view engine', 'ejs');
+app.engine('handlebars', hbs());
+app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, '/views'))
 app.use(express.static(path.join(__dirname, '/public')));
 app.use(bodyParser.json());
@@ -72,7 +72,31 @@ app.get('/', (req, res) => {
         res.cookie('state', state);
         res.redirect(installUrl);
     } else {
-        return res.status(400).send('400 Error - Missing shop parameter');
+        res.status(200).render('home');
+    }
+});
+
+app.post('/installer', async(req, res) => {
+    if (req.body.store) {
+        let store = req.body.store;
+        console.log('User tried to login with: ' + store);
+        if (isURL(store)) {
+            if (store.includes('myshopify')) {
+                if (store.lastIndexOf('/') == store.length - 1) {
+                    store = store.slice(0, store.length - 1);
+                }
+                if (store.indexOf('http://') || store.indexOf('https://')) {
+                    store = store.substring(store.lastIndexOf('/') + 1, store.length);
+                }
+                res.redirect('/?shop=' + store);
+            } else {
+                res.status(200).render('home', { error: 'Please enter a valid myshopify URL' });
+            }
+        } else {
+            res.status(200).render('home', { error: 'Please enter a valid myshopify URL' });
+        }
+    } else {
+        res.status(200).render('home', { error: 'Please enter a valid myshopify URL' });
     }
 });
 
@@ -146,7 +170,7 @@ app.get('/dashboard', verifyToken, async(req, res) => {
                 "shop": req.user.shop
             }
         }
-        console.log('Querying DB for ' + req.user.shop + '\n');
+        console.log('Querying DB for user' + req.user.shop + '\n');
         let current_user = await db.get(queryParams).promise();
         let strategy = 'mobile';
 
@@ -418,7 +442,6 @@ app.get('/dropthemize', verifyToken, async(req, res) => {
             }
         };
         await db.update(updateParams).promise();
-        pollData.fullyOptimized = true;
         //End Dropthemize
     }
 });
@@ -442,7 +465,7 @@ app.get('/api/screenshot/', verifyToken, async(req, res) => {
     }
 });
 
-app.post('/api/hooks/', verifyToken, async(req, res) => {
+app.post('/api/hooks/', async(req, res) => {
     console.log('Hook received. Processing...');
     let topic = req.get('X-Shopify-Topic');
     let dbUpdate;
@@ -477,7 +500,6 @@ app.post('/api/hooks/', verifyToken, async(req, res) => {
                         console.log('Update complete. exit(0)\n');
                     }
                     if (topic == 'app/uninstalled') {
-                        pollData.uninstalled = true;
                         dbUpdate = {
                             TableName: "Dropthemizer-Users",
                             Key: {
@@ -513,7 +535,7 @@ app.post('/api/hooks/', verifyToken, async(req, res) => {
     }
 });
 
-app.get('/api/optimize/', verifyToken, async(req, res) => {
+app.get('/api/optimize/', async(req, res) => {
     if (req.query.url) {
         onflyOptimize.process(req.query.url)
             .then(data => {
@@ -579,4 +601,14 @@ function verifyToken(req, res, next) {
     } catch (error) {
         res.status(403).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
     }
+}
+
+function isURL(str) {
+    var pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+    return pattern.test(str);
 }

@@ -15,7 +15,7 @@
 
     var checkNode = function(addedNode) {
         if (addedNode.nodeType === 1 && addedNode.nodeName === 'IMG') {
-            // optimizeSrc(addedNode);
+            optimizeSrc(addedNode);
         }
         if (addedNode.nodeType === 1 && addedNode.nodeName === 'SCRIPT') {
             addedNode.defer = true;

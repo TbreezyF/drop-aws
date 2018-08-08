@@ -51,7 +51,11 @@ module.exports = {
                 let smallAsset;
                 for (let i = 0; i < assets.length; i++) {
                     smallAsset = minify(assets[i]);
-                    await messenger.createAssets(shop, smallAsset.key, smallAsset.value, postRequestHeaders, theme_id);
+                    try {
+                        await messenger.createAssets(shop, smallAsset.key, smallAsset.value, postRequestHeaders, theme_id);
+                    } catch (error) {
+                        console.log(error);
+                    }
                     if (i == assets.length - 1) minified = true;
                 }
                 return minified;
