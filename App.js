@@ -582,12 +582,8 @@ app.get('/api/status/', verifyToken, async(req, res) => {
 function verifyToken(req, res, next) {
     try {
         if (req.query.info) {
-            console.log('Arrived in verifyToken\n');
-            console.log('Needed cookie: ' + req.cookies.dzcrcn + '\n');
-            console.log('Request Query Info: ' + req.query.info + '\n');
             let user = jwt.verify(req.query.info, process.env.AUTH_KEY);
             req.user = user;
-            console.log('Authorized User : ' + user + '\n');
             next();
         } else if (req.cookies.dzcrcn) {
             const bearerToken = req.cookies.dzcrcn;
