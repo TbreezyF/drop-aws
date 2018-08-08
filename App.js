@@ -334,7 +334,7 @@ app.get('/shopify/charge/handler/', verifyToken, async(req, res) => {
         }
 
     } else {
-        res.status(404).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
+        res.status(403).render('home');
     }
 });
 
@@ -596,10 +596,10 @@ function verifyToken(req, res, next) {
             req.user = user;
             next();
         } else {
-            res.status(403).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
+            res.status(403).render('home');
         }
     } catch (error) {
-        res.status(403).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
+        res.status(403).render('home');
     }
 }
 
