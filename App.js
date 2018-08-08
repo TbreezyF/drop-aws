@@ -332,7 +332,6 @@ app.get('/shopify/charge/handler/', verifyToken, async(req, res) => {
         } else {
             res.status(404).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
         }
-
     } else {
         res.status(403).render('home');
     }
