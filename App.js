@@ -76,7 +76,7 @@ app.get('/', (req, res) => {
     }
 });
 
-app.post('/installer', async(req, res) => {
+app.post('/', async(req, res) => {
     if (req.body.store) {
         let store = req.body.store;
         console.log('User tried to login with: ' + store);
@@ -333,7 +333,7 @@ app.get('/shopify/charge/handler/', verifyToken, async(req, res) => {
             res.status(404).sendFile('404.html', { root: path.join(__dirname, 'public/pages/') });
         }
     } else {
-        res.status(403).render('home');
+        res.status(403).redirect('/');
     }
 });
 
@@ -595,10 +595,10 @@ function verifyToken(req, res, next) {
             req.user = user;
             next();
         } else {
-            res.status(403).render('home');
+            res.status(403).redirect('/');
         }
     } catch (error) {
-        res.status(403).render('home');
+        res.status(403).redirect('/');
     }
 }
 
